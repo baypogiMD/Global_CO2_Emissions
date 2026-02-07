@@ -37,3 +37,11 @@ The project uses:
 - Pandas
 - Matplotlib / Seaborn
 - Statsmodels / Scikit-learn
+
+---
+
+## Run The Dashboard
+
+streamlit run app.py
+
+http://localhost:8501
