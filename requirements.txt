@@ -5,3 +5,4 @@ seaborn
 sqlite3
 scikit-learn
 statsmodels
+streamlit
