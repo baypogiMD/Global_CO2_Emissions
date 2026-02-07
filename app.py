@@ -168,6 +168,76 @@ ax.set_title("Projected Emissions Trajectory")
 st.pyplot(fig)
 
 # -----------------------
+# Carbon Budget Analysis
+# -----------------------
+st.subheader("🔥 Carbon Budget & Cumulative Emissions")
+
+# IPCC-style carbon budget assumption
+CARBON_BUDGET_GT = 400  # GtCO2 remaining for ~1.5°C (approximate)
+
+# Compute cumulative emissions
+df["cumulative_emissions"] = df["emissions"].cumsum()
+
+latest_cumulative = df["cumulative_emissions"].iloc[-1]
+
+remaining_budget = CARBON_BUDGET_GT - (
+    df[df["year"] >= df["year"].max() - 1]["emissions"].sum()
+)
+
+# KPIs
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric(
+        "Cumulative Emissions (GtCO₂)",
+        f"{latest_cumulative:.0f}"
+    )
+
+with col2:
+    st.metric(
+        "Remaining Carbon Budget (GtCO₂)",
+        f"{remaining_budget:.0f}",
+        delta=f"-{df.iloc[-1]['emissions']:.1f} / year"
+    )
+
+with col3:
+    years_left = remaining_budget / df.iloc[-1]["emissions"]
+    st.metric(
+        "Years Until Budget Exhausted",
+        f"{max(years_left, 0):.1f}"
+    )
+
+# Cumulative emissions plot
+fig, ax = plt.subplots()
+ax.plot(df["year"], df["cumulative_emissions"], label="Cumulative Emissions")
+ax.axhline(
+    latest_cumulative + remaining_budget,
+    linestyle="--",
+    color="red",
+    label="Carbon Budget Limit"
+)
+ax.set_xlabel("Year")
+ax.set_ylabel("Cumulative Emissions (GtCO₂)")
+ax.set_title("Cumulative CO₂ Emissions vs Carbon Budget")
+ax.legend()
+st.pyplot(fig)
+
+# Forecast carbon budget exhaustion
+future_cumulative = latest_cumulative + np.cumsum(future_emissions)
+
+exceed_idx = np.where(future_cumulative >= latest_cumulative + remaining_budget)[0]
+
+if len(exceed_idx) > 0:
+    exhaustion_year = int(future_years[exceed_idx[0]])
+    st.warning(
+        f"⚠️ Under Business-as-Usual assumptions, the remaining carbon budget "
+        f"would be exhausted around **{exhaustion_year}**."
+    )
+else:
+    st.success("Carbon budget not exhausted within forecast horizon.")
+
+
+# -----------------------
 # Interpretation
 # -----------------------
 st.subheader("🧠 Interpretation")
@@ -182,3 +252,17 @@ st.markdown("""
 This reinforces that **structural decarbonization** is required,
 not incremental efficiency gains alone.
 """)
+
+st.subheader("🧠 Carbon Budget Interpretation")
+
+st.markdown("""
+**What this means:**
+
+- Cumulative emissions matter more than annual emissions for climate outcomes
+- At current emission rates, the remaining 1.5 °C carbon budget is measured in **years, not decades**
+- Business-as-usual trajectories are incompatible with climate stabilization goals
+
+**Policy implication:**  
+Avoiding budget exhaustion requires **absolute emissions reductions**, not merely slowing growth.
+""")
+
